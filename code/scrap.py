@@ -1,3 +1,4 @@
+import os
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
@@ -7,7 +8,7 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:20.0) Gecko/20100101 Firefox/20.0"
 }
 
-openai.api_key='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'
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
 class Scrap:
     def __init__(self, meta_data, search_tags):
