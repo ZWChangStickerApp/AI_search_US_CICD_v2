@@ -73,7 +73,9 @@ class Scrap:
         tag_list = self.gen_tag(content_list)
         df = pd.DataFrame({'tag': tag_list, 'content': content_list})
         for key in self.meta_data.keys():
-            df[key] = self.meta_data[key]
+            if key != 'content':
+                df[key] = self.meta_data[key]
+        # df['content'] = content_list
         return df
     
 class manualAdd:
@@ -85,5 +87,6 @@ class manualAdd:
     def gen_df(self):
         df = pd.DataFrame({'tag': self.tag_list, 'content': self.content_list})
         for key in self.meta_data.keys():
-            df[key] = self.meta_data[key]
+            if key != 'content':
+                df[key] = self.meta_data[key]
         return df
