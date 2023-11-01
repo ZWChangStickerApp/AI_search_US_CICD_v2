@@ -1,6 +1,5 @@
 import os
 from bs4 import BeautifulSoup
-import requests
 import pandas as pd
 import openai
 
@@ -16,12 +15,7 @@ class Scrap:
         self.search_tags = search_tags
 
     def gen_content(self, tag_class, tag_list):
-        # if self.meta_data['source'] == 'url':
-        #     htmlLink = self.meta_data['url']
-        #     r = requests.get(htmlLink, headers=headers)
-        #     soup = BeautifulSoup(r.content, "html.parser")
-        # else:
-        soup = BeautifulSoup(self.meta_data['content'], "html.parser")
+        soup = BeautifulSoup(self.meta_data['html'], "html.parser")
         content = []
         for item in tag_list:
             item_list = soup.find_all(tag_class, {"class": item})
@@ -45,7 +39,7 @@ class Scrap:
             content_list += content[key]
         return content_list
 
-    def get_completion(self, prompt, model="gpt-3.5-turbo"):
+    def get_completion(self, prompt, model="gpt-3.5-turbo-16k"):
         messages = [{"role": "user", "content": prompt}]
         response = openai.ChatCompletion.create(
             model=model,
@@ -73,8 +67,7 @@ class Scrap:
         tag_list = self.gen_tag(content_list)
         df = pd.DataFrame({'tag': tag_list, 'content': content_list})
         for key in self.meta_data.keys():
-            if key != 'content':
-                df[key] = self.meta_data[key]
+            df[key] = self.meta_data[key]
         # df['content'] = content_list
         return df
     
@@ -87,6 +80,45 @@ class manualAdd:
     def gen_df(self):
         df = pd.DataFrame({'tag': self.tag_list, 'content': self.content_list})
         for key in self.meta_data.keys():
-            if key != 'content':
-                df[key] = self.meta_data[key]
+            df[key] = self.meta_data[key]
+        return df
+    
+class truncate:
+    def __init__(self, text, n_blocks):
+        self.text = text
+        self.n_blocks = n_blocks
+
+    def get_completion(self, prompt):
+        model="gpt-3.5-turbo-16k"
+        messages = [{"role": "user", "content": prompt}]
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=messages,
+            temperature=0, 
+        )
+        return response.choices[0].message["content"]
+    
+    def gen_blocks(self):
+        prompt = f"""
+            Your task is to generate a list which breaks the text into {self.n_blocks} blocks.\
+            Use the original text and don't change the order of the blocks.\
+            The text is: ```{self.text}```\
+            Delete the index of the blocks like 1. 2. 3. etc.
+            """
+        response = self.get_completion(prompt)
+        return response.split('\n\n')
+    
+    def gen_df(self):
+        tag_list = []
+        content_list = self.gen_blocks()
+        for item in content_list:
+            prompt = f"""
+            Your task is to generate an one-sentence searchable tagline or question for the given content within 20 words. \
+            You should use plain language, and don't mention the terms like 'the context' or 'content: ',\
+            the output should be a string of text without unnecessary quotation marks.\
+            The content is: ```{item }```
+            """
+            response = self.get_completion(prompt)
+            tag_list.append(response)
+        df = pd.DataFrame({'tag': tag_list, 'content': content_list})
         return df
