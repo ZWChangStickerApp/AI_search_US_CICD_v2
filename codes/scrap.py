@@ -84,7 +84,7 @@ class manualAdd:
         return df
     
 class truncate:
-    def __init__(self, text, n_blocks):
+    def __init__(self, text, n_blocks): # Seems the n_blocks is a crucial parameter to get desired results. So far n_blocks=10 is the best.  
         self.text = text
         self.n_blocks = n_blocks
 
